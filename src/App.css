@@ -1,0 +1,520 @@
+/* 공통 스타일 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #ffffff;
+}
+
+/* 대시보드 레이아웃 */
+.dashboard {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+/* 헤더 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  width: 50%;
+  padding: 0.5rem;
+  border: 1px solid #e2e2e2;
+  border-radius: 0.25rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #047857;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.username {
+  font-size: 0.875rem;
+}
+
+/* 메인 컨테이너 */
+.main-container {
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* 사이드바 */
+.sidebar {
+  width: 12rem;
+  padding-right: 1.5rem;
+  border-right: 1px solid #e2e2e2;
+  color: #4b5563;
+}
+
+.sidebar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.menu-item {
+  cursor: pointer;
+}
+
+.menu-item.active {
+  color: #047857;
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  margin-top: 2.5rem;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.section-title {
+  margin-bottom: 0.5rem;
+}
+
+/* 메인 콘텐츠 */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-x: visible;
+  min-width: 0;
+}
+
+/* 프로젝트 카드 그리드 - 가로 스크롤 */
+.card-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  max-width: 100%;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #047857 #e2e2e2;
+  background: #fff;
+  border-bottom: 2px solid #e2e2e2;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.03);
+  z-index: 2;
+  min-width: 0;
+}
+
+.card,
+.add-card-button {
+  min-width: 180px;
+  max-width: 220px;
+  flex: 0 0 180px;
+  min-height: 120px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  background-color: white;
+  border: 1px solid #e2e2e2;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.card-title {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-align: left;
+  margin: 0;
+  z-index: 2;
+}
+
+.card-content {
+  width: 100%;
+  padding: 2.5rem 0.5rem 1.5rem 0.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* 카드 내용(값, 리스트 등)은 기본적으로 가운데 정렬 유지 */
+.card-content > *:not(.card-title) {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  line-height: 1.1;
+}
+
+.card-unit {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* 반응형 카드 그리드 미디어 쿼리 제거 */
+
+.card.primary {
+  background-color: #047857;
+  color: white;
+  position: relative;
+}
+
+.card.secondary {
+  background-color: white;
+  color: #1f2937;
+  border: 2px solid #047857;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card.secondary:hover {
+  background-color: rgba(4, 120, 87, 0.05);
+}
+
+.card.secondary .delete-button {
+  background-color: rgba(4, 120, 87, 0.1);
+  color: #047857;
+}
+
+.card.secondary .delete-button:hover {
+  background-color: rgba(4, 120, 87, 0.2);
+}
+
+/* 정보 그리드 - 3열 구조 */
+.info-grid {
+  display: grid;
+  grid-template-columns: 3fr 1.2fr 1.2fr;
+  grid-template-rows: auto auto;
+  gap: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  margin-top: -3%;
+}
+
+.chart-card {
+  grid-row: 1 / span 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+}
+
+.robots-card {
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
+  height: 100%;
+}
+
+.notifications-card {
+  grid-row: 1 / 2;
+  grid-column: 3 / 4;
+  height: 100%;
+}
+
+.team-card {
+  grid-row: 2 / 3;
+  grid-column: 2 / 3;
+  height: 100%;
+}
+
+.maps-card {
+  grid-row: 2 / 3;
+  grid-column: 3 / 4;
+  height: 100%;
+}
+
+@media (max-width: 1100px) {
+  .info-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .chart-card {
+    grid-row: 1 / 3;
+    grid-column: 1 / 2;
+  }
+  .robots-card {
+    grid-row: 2 / 3;
+    grid-column: 1 / 2;
+  }
+  .notifications-card {
+    grid-row: 2 / 3;
+    grid-column: 2 / 3;
+  }
+  .team-card {
+    grid-row: 3 / 4;
+    grid-column: 1 / 2;
+  }
+  .maps-card {
+    grid-row: 3 / 4;
+    grid-column: 2 / 3;
+  }
+}
+
+@media (max-width: 700px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+  }
+  .chart-card, .robots-card, .notifications-card, .team-card, .maps-card {
+    grid-column: 1 / 2 !important;
+    grid-row: auto !important;
+  }
+}
+
+/* 로봇 리스트 */
+.robot-list {
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.robot-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.robot-item.good {
+  color: #047857;
+}
+
+.robot-item.warning {
+  color: #d97706;
+}
+
+.robot-item.error {
+  color: #dc2626;
+}
+
+/* 알림 */
+.notification-list {
+  font-size: 0.875rem;
+}
+
+.notification {
+  margin-bottom: 0.25rem;
+}
+
+.notification.warning {
+  color: #d97706;
+}
+
+.notification.error {
+  color: #dc2626;
+}
+
+/* 하단 그리드 */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* 팀 리스트 */
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-member {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #047857;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* 맵 플레이스홀더 */
+.map-placeholder {
+  height: 8rem;
+  background-color: #f3f4f6;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+/* 배터리 값 */
+.battery-value {
+  font-size: 2.25rem;
+  color: #047857;
+  text-align: center;
+}
+
+/* 통계 그리드 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.connection-value {
+  font-size: 1.875rem;
+  text-align: center;
+}
+
+.ping-value {
+  font-size: 1.875rem;
+  color: #dc2626;
+  text-align: center;
+}
+
+/* 카드 추가 버튼 */
+.add-card-button {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  background-color: rgba(4, 120, 87, 0.1);
+  border: 2px dashed #047857;
+  border-radius: 0.5rem;
+  color: #047857;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-card-button:hover {
+  background-color: rgba(4, 120, 87, 0.2);
+}
+
+/* 차트 컨테이너 */
+.chart-container {
+  height: 300px;
+  width: 500px;
+  margin: 1rem 0;
+}
+
+.weight-info {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.weight-info p {
+  margin-bottom: 0.5rem;
+}
+
+.weight-info strong {
+  color: #047857;
+}
+
+/* 삭제 버튼 */
+.delete-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.delete-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.status-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.status-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-top: 1.2rem;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.status-label {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 0.2rem;
+}
+
+.status-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #047857;
+}
