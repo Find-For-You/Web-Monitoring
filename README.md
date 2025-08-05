@@ -66,13 +66,9 @@ streamlit run main.py
 * [ ] 대시보드 정보 확장 (배터리 상태, 위치, 장애 감지 등)
 * [ ] 로봇 수동 조작 모드 UI/UX 개선
 * [ ] 실시간 알림/경고 시스템 고도화 (배터리 부족, 장애 등)
-* [ ] Firebase → PostgreSQL 마이그레이션
 * [ ] WebSocket 기반 실시간 통신 구현
 * [ ] AWS 기반 클라우드 아키텍처 설계 및 배포
-* [ ] 실시간 카메라 영상 스트리밍 연동 (Kinesis Video 예정)
-* [ ] 모바일 및 태블릿 대응 UI
-* [ ] 다국어 지원 (영어/한국어)
-* [ ] 보안 강화 (JWT, OAuth2.0 등)
+* [ ] 실시간 카메라 영상 스트리밍 연동
 
 ---
 
@@ -81,9 +77,9 @@ streamlit run main.py
 | 구성 요소         | 기술                                                  |
 | ------------- | --------------------------------------------------- |
 | **Frontend**  | Streamlit + Plotly + Streamlit Community Components |
-| **Backend**   | SQLite → PostgreSQL 예정, AWS Lambda / IoT Core 예정    |
+| **Backend**   | AWS    |
 | **Real-time** | `st_autorefresh`, WebSocket (예정)                    |
-| **AI Module** | YOLOv5 / YOLOv8 (탐지 결과 시각화)                         |
+| **AI Module** | YOLO (탐지 결과 시각화)                         |
 | **System**    | psutil 기반 로컬 시스템 모니터링                               |
 | **Auth**      | SHA256 비밀번호 해싱 + 세션 기반 인증 + 역할 기반 접근 제어(RBAC)       |
 
