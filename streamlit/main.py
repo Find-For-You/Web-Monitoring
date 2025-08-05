@@ -1,283 +1,278 @@
 import streamlit as st
+import sqlite3
+import hashlib
+import time
+from datetime import datetime
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from streamlit_autorefresh import st_autorefresh
 
 # 페이지 설정
 st.set_page_config(
-    page_title="탐사로봇 대시보드",
-    page_icon="🏭",
-    layout="wide"
+    page_title="로봇 관제 시스템",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-with st.sidebar:
-    st.header("Find For You")
-    st.markdown("---")
+# 세션 상태 초기화
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'user_role' not in st.session_state:
+    st.session_state.user_role = 'user'
+if 'user_id' not in st.session_state:
+    st.session_state.user_id = None
 
-# --- 1. 히어로 섹션 ---
-with st.container():
+def hash_password(password):
+    """비밀번호 해싱"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def create_user_table():
+    """사용자 테이블 생성"""
+    conn = sqlite3.connect('robot_monitoring.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            role TEXT DEFAULT 'user',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    
+    # 기본 관리자 계정 생성
+    try:
+        admin_password = hash_password("admin123")
+        cursor.execute('''
+            INSERT OR IGNORE INTO users (username, password, email, role)
+            VALUES (?, ?, ?, ?)
+        ''', ("admin", admin_password, "admin@robot.com", "admin"))
+        conn.commit()
+    except:
+        pass
+    
+    conn.close()
+
+def login_user(username, password):
+    """사용자 로그인"""
+    conn = sqlite3.connect('robot_monitoring.db')
+    cursor = conn.cursor()
+    hashed_password = hash_password(password)
+    
+    cursor.execute('''
+        SELECT id, username, role FROM users 
+        WHERE username = ? AND password = ?
+    ''', (username, hashed_password))
+    
+    user = cursor.fetchone()
+    conn.close()
+    
+    return user
+
+def register_user(username, password, email):
+    """사용자 등록"""
+    conn = sqlite3.connect('robot_monitoring.db')
+    cursor = conn.cursor()
+    hashed_password = hash_password(password)
+    
+    try:
+        cursor.execute('''
+            INSERT INTO users (username, password, email)
+            VALUES (?, ?, ?)
+        ''', (username, hashed_password, email))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        conn.close()
+        return False
+
+def main_splash():
+    """스플래시 화면 - 로그인/회원가입"""
     st.markdown("""
-    <style>
-    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
-    @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css");
-
-    * {
-        font-family: Pretendard;
-        padding: 0;
-        margin: 0;
-    }
-
-    .section {
-        width: 100%;
-        height: 100vh;
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-    }
-
-    .section1 {
-        background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-                    url('https://i.imgur.com/wVwCjnr.jpeg') no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-    }
-
-    .section2 {
-        background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-                    url('https://i.imgur.com/cW4y4s3.jpeg') no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-    }
-
-    .section3 {
-        background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-                    url('https://i.imgur.com/iUenTpM.jpeg') no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-    }
-
-    .section4 {
-        background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-                    url('https://i.imgur.com/c5tnILg.jpeg') no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-    }
-
-    .section5 {
-        background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-                    url('https://i.imgur.com/OHGBO4C.jpeg') no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-    }
-
-    .section6 {
-        background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-                    url('https://i.imgur.com/bcps4wK.jpeg') no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-    }
-
-    .section-content {
-        color: white;
-        padding: 3rem 4rem;
-        background: rgba(30, 57, 30, 0.75);
-        border-radius: 15px;
-        max-width: 1000px;
-        position: relative;
-        z-index: 1;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-
-    .section-content:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.45);
-    }
-
-    .hero-title {
-        font-size: 5em;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 0.5em;
-        line-height: 1.1;
-        color: white;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .hero-subtitle {
-        font-size: 1.8em;
-        text-align: center;
-        color: white;
-        margin-bottom: 1em;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .section-header {
-        font-size: 2.8em;
-        font-weight: 600;
-        text-align: center;
-        margin-bottom: 1em;
-        color: white;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .section-text {
-        font-size: 1.2em;
-        line-height: 1.6;
-        text-align: center;
-        margin-bottom: 2em;
-        color: white;
-    }
-
-    .feature-point {
-        font-size: 1.1em;
-        line-height: 1.5;
-        padding: 0.8em 0;
-        color: white;
-    }
-
-    .contact-info {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 2em;
-    }
-
-    .contact-item {
-        display: flex;
-        align-items: center;
-        margin: 0 1em;
-    }
-
-    .contact-item i {
-        margin-right: 0.5em;
-    }
-
-    .contact-item a {
-        color: white;
-        text-decoration: none;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # 첫 번째 섹션
-    st.markdown("""
-    <div class='section section1'>
-        <div class='section-content'>
-            <h1 class='hero-title'>AI 험지탐사 로봇 시스템</h1>
-            <p class='hero-subtitle'>극한 환경에서 자율적으로 정보를 수집하고<br>지형과 장애물을 인식하여 구조 및 정찰 임무를 수행하는 AI 로봇 시스템입니다.</p>
-        </div>
+    <div style="text-align: center; padding: 50px;">
+        <h1 style="font-size: 3rem; color: #1f77b4;">🤖 로봇 관제 시스템</h1>
+        <p style="font-size: 1.2rem; color: #666;">Robot Monitoring & Control System</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # 탭 생성
+    tab1, tab2 = st.tabs(["로그인", "회원가입"])
+    
+    with tab1:
+        st.subheader("로그인")
+        with st.form("login_form"):
+            username = st.text_input("사용자명")
+            password = st.text_input("비밀번호", type="password")
+            submit_button = st.form_submit_button("로그인")
+            
+            if submit_button:
+                if username and password:
+                    user = login_user(username, password)
+                    if user:
+                        st.session_state.authenticated = True
+                        st.session_state.user_id = user[0]
+                        st.session_state.user_role = user[2]
+                        st.success("로그인 성공!")
+                        st.rerun()
+                    else:
+                        st.error("사용자명 또는 비밀번호가 잘못되었습니다.")
+                else:
+                    st.warning("모든 필드를 입력해주세요.")
+    
+    with tab2:
+        st.subheader("회원가입")
+        with st.form("register_form"):
+            new_username = st.text_input("사용자명 (신규)")
+            new_password = st.text_input("비밀번호 (신규)", type="password")
+            confirm_password = st.text_input("비밀번호 확인", type="password")
+            email = st.text_input("이메일")
+            submit_register = st.form_submit_button("회원가입")
+            
+            if submit_register:
+                if new_username and new_password and confirm_password and email:
+                    if new_password == confirm_password:
+                        if register_user(new_username, new_password, email):
+                            st.success("회원가입이 완료되었습니다! 로그인해주세요.")
+                        else:
+                            st.error("이미 존재하는 사용자명 또는 이메일입니다.")
+                    else:
+                        st.error("비밀번호가 일치하지 않습니다.")
+                else:
+                    st.warning("모든 필드를 입력해주세요.")
 
-    # 두 번째 섹션
-    st.markdown("""
-    <div class='section section2'>
-        <div class='section-content'>
-            <h2 class='section-header'>험지에 존재하는 보이지 않는 위협</h2>
-            <p class='section-text'>
-                재난 현장, 무너진 건물, 군사 정찰 지역 등 험지는 정보 수집과 인명 구조에 치명적인 위험을 내포하고 있습니다.<br>
-                기존의 인력에 의한 탐사나 바퀴형 로봇, 또는 수동 조종 시스템은 자율성과 환경 적응력에서 한계를 드러냅니다.<br>
-                이 문제를 해결하기 위해선 복잡한 지형에서도 자율적으로 이동하고, 주변 환경을 인식할 수 있는 새로운 접근이 필요합니다.
-            </p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+def main_dashboard():
+    """메인 대시보드"""
+    # 사이드바 네비게이션
+    with st.sidebar:
+        st.title("🤖 로봇 관제 시스템")
+        st.markdown("---")
+        
+        # 사용자 정보
+        if st.session_state.authenticated:
+            st.write(f"**사용자:** {st.session_state.user_role}")
+            st.write(f"**역할:** {st.session_state.user_role}")
+        
+        st.markdown("---")
+        
+        # 네비게이션 메뉴
+        st.subheader("📋 메뉴")
+        
+        # 일반 사용자 메뉴
+        if st.button("🏠 홈", use_container_width=True):
+            st.switch_page("pages/1_홈.py")
+        
+        if st.button("🤖 로봇 관리", use_container_width=True):
+            st.switch_page("pages/2_로봇관리.py")
+        
+        if st.button("🗺️ 지도", use_container_width=True):
+            st.switch_page("pages/3_지도.py")
+        
+        if st.button("📊 분석/리포트", use_container_width=True):
+            st.switch_page("pages/4_분석리포트.py")
+        
+        if st.button("⚙️ 설정", use_container_width=True):
+            st.switch_page("pages/5_설정.py")
+        
+        # 관리자 전용 메뉴
+        if st.session_state.user_role == 'admin':
+            st.markdown("---")
+            st.subheader("🔧 관리자")
+            
+            if st.button("🔧 관리자 모드", use_container_width=True):
+                st.switch_page("pages/6_관리자모드.py")
+        
+        st.markdown("---")
+        
+        # 로그아웃 버튼
+        if st.button("🚪 로그아웃", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.user_id = None
+            st.session_state.user_role = None
+            st.success("로그아웃되었습니다.")
+            st.rerun()
+    
+    # 메인 콘텐츠
+    st.title("🏠 홈 - 전체 개요")
+    
+    # 자동 새로고침 (5초마다)
+    count = st_autorefresh(interval=5000, limit=None, key="fizzbuzzcounter")
+    
+    # 상단 메트릭
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(
+            label="연결된 로봇 수",
+            value="5",
+            delta="2"
+        )
+    
+    with col2:
+        st.metric(
+            label="전체 연결 상태",
+            value="정상",
+            delta="🟢"
+        )
+    
+    with col3:
+        st.metric(
+            label="평균 배터리",
+            value="78%",
+            delta="-2%"
+        )
+    
+    with col4:
+        st.metric(
+            label="평균 온도",
+            value="24°C",
+            delta="1°C"
+        )
+    
+    # 차트 영역
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("로봇 상태 분포")
+        status_data = {
+            '상태': ['정상', '경고', '오류', '충전중'],
+            '개수': [3, 1, 0, 1]
+        }
+        df_status = pd.DataFrame(status_data)
+        fig = px.pie(df_status, values='개수', names='상태', title="로봇 상태 분포")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        st.subheader("배터리 수준")
+        battery_data = {
+            '로봇': ['Robot-01', 'Robot-02', 'Robot-03', 'Robot-04', 'Robot-05'],
+            '배터리': [85, 72, 90, 65, 78]
+        }
+        df_battery = pd.DataFrame(battery_data)
+        fig = px.bar(df_battery, x='로봇', y='배터리', title="로봇별 배터리 수준")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # 최근 활동 로그
+    st.subheader("최근 활동")
+    log_data = {
+        '시간': ['14:30', '14:25', '14:20', '14:15', '14:10'],
+        '로봇': ['Robot-01', 'Robot-02', 'Robot-03', 'Robot-01', 'Robot-04'],
+        '활동': ['객체 탐지', '경로 이동', '센서 데이터 전송', '비상 정지', '충전 시작']
+    }
+    df_log = pd.DataFrame(log_data)
+    st.dataframe(df_log, use_container_width=True)
 
-    # 세 번째 섹션
-    st.markdown("""
-    <div class='section section3'>
-        <div class='section-content'>
-            <h2 class='section-header'>우리의 솔루션: AI 기반 험지 탐사로봇</h2>
-            <p class='section-text'>
-            본 시스템은 다관절 족보행 로봇에 고성능 센서와 딥러닝 알고리즘을 결합하여 <br>
-            실시간 객체 인식 및 장애물 회피, 경로 재계산 등 자율적인 임무 수행이 가능합니다.
-            </p>
-            <ul class='section-text'>
-                <li class='feature-point'><b>실시간 환경 분석:</b> LiDAR와 카메라로 지형을 인식하고 3D 맵 작성.</li>
-                <li class='feature-point'><b>YOLO 기반 객체 탐지:</b> 사람, 균열, 장애물 등 탐지 및 대응.</li>
-                <li class='feature-point'><b>지형 적응형 보행:</b> Adaptive Impedance를 통한 다리 높이/각도 조절.</li>
-                <li class='feature-point'><b>자율 주행 기능:</b> RRT, A*, POMDP 등 경로 계획 알고리즘 적용.</li>
-            </ul>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 네 번째 섹션
-    st.markdown("""
-    <div class='section section4'>
-        <div class='section-content'>
-            <h2 class='section-header'>자율성과 안정성을 위한 핵심 기술</h2>
-            <p class='section-text'>
-            극한 환경에서도 안정적인 탐사를 가능하게 하기 위해<br>최첨단 센서 융합 기술과 로봇 제어 알고리즘을 통합하였습니다.
-            </p>
-            <ul class='section-text'>
-                <li class='feature-point'><b>IMU & PID 제어:</b> 보행 안정화와 전복 방지를 위한 실시간 자세 보정.</li>
-                <li class='feature-point'><b>SLAM 기반 자율맵 작성:</b> 미지 환경에서도 자기 위치 추정과 지도 생성.</li>
-                <li class='feature-point'><b>P2P 네트워크:</b> 로봇 간 직접 통신을 통해 신뢰성 높은 데이터 공유.</li>
-            </ul>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 다섯 번째 섹션
-    st.markdown("""
-    <div class='section section5'>
-        <div class='section-content'>
-            <h2 class='section-header'>AI 로봇이 만드는 미래의 구조 전략</h2>
-            <p class='section-text'>
-            단순한 원격 제어를 넘어, 우리 시스템은 자율적 판단과 데이터 기반 대응이 가능한<br>지능형 플랫폼으로 확장됩니다.
-            </p>
-            <ul class='section-text'>
-                <li class='feature-point'><b>재난 구조 효율화:</b> 구조대원 접근 전 탐색 및 위험 정보 제공.</li>
-                <li class='feature-point'><b>군사 정찰 활용:</b> 은폐성 높은 구조로 적진 탐지 및 실시간 영상 수집.</li>
-                <li class='feature-point'><b>산업 안전 향상:</b> 고온, 고압 위험지역의 자동 순찰 및 사고 예방.</li>
-                <li class='feature-point'><b>정밀 데이터 확보:</b> 극지/지하 등에서 고해상도 시각 정보와 센서 데이터 수집.</li>
-            </ul>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 여섯 번째 섹션
-    st.markdown("""
-    <div class='section section6'>
-        <div class='section-content'>
-            <h2 class='section-header'>험지 탐사의 미래를 지금 확인하세요.</h2>
-            <p class='section-text'>
-            본 프로젝트에 대한 더 자세한 정보나 문의 사항, 또는 협업 문의는 아래의 연락처로 연락해주시기 바랍니다.
-            </p>
-            <div class="contact-info">
-                <div class="contact-item">
-                    <i class="fas fa-envelope"></i>
-                    <a href="mailto:chrisabc94@gmail.com">chrisabc94@gmail.com</a>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-phone-alt"></i>
-                    <span>+82 10-2204-4587</span>
-                </div>
-                <div class="contact-item">
-                    <i class="fab fa-github"></i>
-                    <a href="https://github.com/Find-For-You" target="_blank">GitHub Repository</a>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span>한국공학대학교</span>
-                </div>
-            </div>
-            <p class='section-text' style='margin-top: 2em;'>
-            험지에서도 안전하게, 지금 바로 지능형 로봇을 이용한 탐사를 시작하세요.
-            </p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
+# 메인 실행
 if __name__ == "__main__":
-    pass # Streamlit이 자동으로 실행합니다.
+    # 사용자 테이블 생성
+    create_user_table()
+    
+    # 인증 상태에 따라 페이지 표시
+    if not st.session_state.authenticated:
+        main_splash()
+    else:
+        main_dashboard()
