@@ -287,4 +287,4 @@ find logs/ -name "*.log" -mtime +7 -delete
 
 ---
 
-**© 2024 AI 지능형 정보 탐색 로봇 모니터링 시스템. All rights reserved.**
+**© 2025 AI 지능형 정보 탐색 로봇 모니터링 시스템. All rights reserved.**
