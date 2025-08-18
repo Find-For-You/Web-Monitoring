@@ -35,6 +35,24 @@ def display_realtime_map():
     """실시간 지도 표시"""
     st.subheader("📍 실시간 로봇 위치")
     
+    # 세션 상태 초기화
+    if 'map_center' not in st.session_state:
+        st.session_state.map_center = None
+    if 'map_zoom' not in st.session_state:
+        st.session_state.map_zoom = 12
+    
+    # 지도 컨트롤 버튼
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        if st.button("🗺️ 지도 리셋", help="지도를 초기 위치로 되돌립니다"):
+            st.session_state.map_center = None
+            st.session_state.map_zoom = 12
+            st.rerun()
+    
+    with col2:
+        if st.button("🔄 데이터 새로고침", help="로봇 위치 데이터를 새로고침합니다"):
+            st.rerun()
+    
     try:
         all_robots = robot_service.get_all_robots()
         
@@ -43,13 +61,16 @@ def display_realtime_map():
             robots_with_location = [r for r in all_robots if r.location]
             
             if robots_with_location:
-                avg_lat = sum(r.location.latitude for r in robots_with_location) / len(robots_with_location)
-                avg_lon = sum(r.location.longitude for r in robots_with_location) / len(robots_with_location)
+                # 초기 중심점 설정 (한 번만)
+                if st.session_state.map_center is None:
+                    avg_lat = sum(r.location.latitude for r in robots_with_location) / len(robots_with_location)
+                    avg_lon = sum(r.location.longitude for r in robots_with_location) / len(robots_with_location)
+                    st.session_state.map_center = [avg_lat, avg_lon]
                 
                 # Folium 지도 생성
                 m = folium.Map(
-                    location=[avg_lat, avg_lon],
-                    zoom_start=12,
+                    location=st.session_state.map_center,
+                    zoom_start=st.session_state.map_zoom,
                     tiles='OpenStreetMap'
                 )
                 
@@ -89,8 +110,32 @@ def display_realtime_map():
                         icon=folium.Icon(color=color, icon='robot', prefix='fa')
                     ).add_to(m)
                 
-                # 지도 표시
-                st_folium(m, width=800, height=600)
+                # 지도 표시 및 상태 관리
+                map_data = st_folium(
+                    m, 
+                    use_container_width=True,
+                    height=600,
+                    key="robot_map",  # 고유 키로 캐싱
+                    returned_objects=["last_clicked", "zoom", "center"]
+                )
+                
+                # 지도 상태 업데이트 (변경사항이 있을 때만)
+                if map_data:
+                    # zoom 상태 업데이트
+                    if 'zoom' in map_data and map_data['zoom'] is not None:
+                        if map_data['zoom'] != st.session_state.map_zoom:
+                            st.session_state.map_zoom = map_data['zoom']
+                    
+                    # center 상태 업데이트
+                    if 'center' in map_data and map_data['center'] is not None:
+                        if map_data['center'] != st.session_state.map_center:
+                            st.session_state.map_center = map_data['center']
+                
+                # 현재 지도 상태 표시 (디버깅용, 필요시 제거 가능)
+                with st.expander("🗺️ 지도 상태 정보"):
+                    st.write(f"**현재 줌 레벨:** {st.session_state.map_zoom}")
+                    st.write(f"**현재 중심점:** {st.session_state.map_center}")
+                    st.write(f"**로봇 수:** {len(robots_with_location)}개")
                 
                 # 로봇 목록 테이블
                 st.subheader("📋 현재 위치 정보")

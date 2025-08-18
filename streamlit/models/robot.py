@@ -71,7 +71,22 @@ class Robot:
                  status: str = ROBOT_STATUS['OFFLINE'],
                  location: Optional[RobotLocation] = None,
                  battery_level: float = 0.0,
-                 created_at: Optional[datetime] = None):
+                 created_at: Optional[datetime] = None,
+                 description: Optional[str] = None,
+                 manufacturer: Optional[str] = None,
+                 serial_number: Optional[str] = None,
+                 firmware_version: Optional[str] = None,
+                 last_maintenance: Optional[datetime] = None,
+                 next_maintenance: Optional[datetime] = None,
+                 total_operating_hours: float = 0.0,
+                 sensors: Optional[List[str]] = None,
+                 camera_streams: Optional[List[CameraStream]] = None,
+                 documents_processed: Optional[int] = None,
+                 search_accuracy: Optional[float] = None,
+                 ai_model_version: Optional[str] = None,
+                 location_name: Optional[str] = None,
+                 building: Optional[str] = None,
+                 room_number: Optional[int] = None):
         
         self.robot_id = robot_id
         self.name = name
@@ -83,15 +98,21 @@ class Robot:
         self.updated_at = datetime.now()
         
         # 추가 속성들
-        self.description: Optional[str] = None
-        self.manufacturer: Optional[str] = None
-        self.serial_number: Optional[str] = None
-        self.firmware_version: Optional[str] = None
-        self.last_maintenance: Optional[datetime] = None
-        self.next_maintenance: Optional[datetime] = None
-        self.total_operating_hours: float = 0.0
-        self.sensors: List[str] = []
-        self.camera_streams: List[CameraStream] = []
+        self.description = description
+        self.manufacturer = manufacturer
+        self.serial_number = serial_number
+        self.firmware_version = firmware_version
+        self.last_maintenance = last_maintenance
+        self.next_maintenance = next_maintenance
+        self.total_operating_hours = total_operating_hours
+        self.sensors = sensors or []
+        self.camera_streams = camera_streams or []
+        self.documents_processed = documents_processed
+        self.search_accuracy = search_accuracy
+        self.ai_model_version = ai_model_version
+        self.location_name = location_name
+        self.building = building
+        self.room_number = room_number
         
     def to_dict(self) -> Dict:
         """딕셔너리로 변환"""
@@ -105,16 +126,44 @@ class Robot:
     @classmethod
     def from_dict(cls, data: Dict) -> 'Robot':
         """딕셔너리에서 생성"""
-        location_data = data.pop('location', None)
-        camera_streams_data = data.pop('camera_streams', [])
+        # 데이터 복사본 생성
+        robot_data = data.copy()
         
-        location = RobotLocation(**location_data) if location_data else None
-        camera_streams = [CameraStream(**stream_data) for stream_data in camera_streams_data]
+        # location과 camera_streams는 별도 처리
+        location_data = robot_data.pop('location', None)
+        camera_streams_data = robot_data.pop('camera_streams', [])
         
-        robot = cls(**data)
-        robot.location = location
-        robot.camera_streams = camera_streams
-        return robot
+        # Robot 클래스에서 지원하지 않는 필드들 제거
+        unsupported_fields = ['updated_at']  # Robot.__init__에서 지원하지 않는 필드들
+        for field in unsupported_fields:
+            robot_data.pop(field, None)
+        
+        # location 객체 생성
+        location = None
+        if location_data:
+            try:
+                location = RobotLocation(**location_data)
+            except Exception as e:
+                print(f"Location 데이터 파싱 실패: {e}")
+        
+        # camera_streams 객체 생성
+        camera_streams = []
+        for stream_data in camera_streams_data:
+            try:
+                stream = CameraStream(**stream_data)
+                camera_streams.append(stream)
+            except Exception as e:
+                print(f"Camera stream 데이터 파싱 실패: {e}")
+        
+        # Robot 객체 생성
+        try:
+            robot = cls(**robot_data)
+            robot.location = location
+            robot.camera_streams = camera_streams
+            return robot
+        except Exception as e:
+            print(f"Robot 객체 생성 실패: {e}, 데이터: {robot_data}")
+            raise
     
     def update_status(self, status: str):
         """상태 업데이트"""

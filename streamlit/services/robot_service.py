@@ -44,7 +44,31 @@ class RobotService:
         """모든 로봇 조회"""
         try:
             robots_data = self.db.scan('robots')
-            return [Robot.from_dict(robot_data) for robot_data in robots_data]
+            robots = []
+            for robot_data in robots_data:
+                try:
+                    # datetime 문자열을 datetime 객체로 변환
+                    if 'created_at' in robot_data and isinstance(robot_data['created_at'], str):
+                        robot_data['created_at'] = datetime.fromisoformat(robot_data['created_at'].replace('Z', '+00:00'))
+                    if 'updated_at' in robot_data and isinstance(robot_data['updated_at'], str):
+                        robot_data['updated_at'] = datetime.fromisoformat(robot_data['updated_at'].replace('Z', '+00:00'))
+                    if 'last_maintenance' in robot_data and robot_data['last_maintenance'] and isinstance(robot_data['last_maintenance'], str):
+                        robot_data['last_maintenance'] = datetime.fromisoformat(robot_data['last_maintenance'].replace('Z', '+00:00'))
+                    if 'next_maintenance' in robot_data and robot_data['next_maintenance'] and isinstance(robot_data['next_maintenance'], str):
+                        robot_data['next_maintenance'] = datetime.fromisoformat(robot_data['next_maintenance'].replace('Z', '+00:00'))
+                    
+                    # location 데이터 처리
+                    if 'location' in robot_data and robot_data['location']:
+                        location_data = robot_data['location']
+                        if 'timestamp' in location_data and isinstance(location_data['timestamp'], str):
+                            location_data['timestamp'] = datetime.fromisoformat(location_data['timestamp'].replace('Z', '+00:00'))
+                    
+                    robot = Robot.from_dict(robot_data)
+                    robots.append(robot)
+                except Exception as robot_error:
+                    logger.warning(f"로봇 데이터 파싱 실패: {robot_error}, 데이터: {robot_data}")
+                    continue
+            return robots
         except Exception as e:
             logger.error(f"모든 로봇 조회 실패: {e}")
             raise
@@ -207,23 +231,32 @@ class RobotService:
     def get_robot_alerts(self, robot_id: str, resolved: Optional[bool] = None) -> List[Alert]:
         """로봇 알림 조회"""
         try:
-            filter_expression = '#robot_id = :robot_id'
-            expression_attribute_names = {'#robot_id': 'robot_id'}
-            expression_attribute_values = {':robot_id': robot_id}
+            alerts_data = self.db.scan('alerts')
+            alerts = []
             
-            if resolved is not None:
-                filter_expression += ' AND resolved = :resolved'
-                expression_attribute_values[':resolved'] = resolved
+            for alert_data in alerts_data:
+                try:
+                    # robot_id 필터링
+                    if alert_data.get('robot_id') != robot_id:
+                        continue
+                    
+                    # resolved 필터링
+                    if resolved is not None and alert_data.get('resolved') != resolved:
+                        continue
+                    
+                    # datetime 문자열을 datetime 객체로 변환
+                    if 'timestamp' in alert_data and isinstance(alert_data['timestamp'], str):
+                        alert_data['timestamp'] = datetime.fromisoformat(alert_data['timestamp'].replace('Z', '+00:00'))
+                    if 'resolved_at' in alert_data and alert_data['resolved_at'] and isinstance(alert_data['resolved_at'], str):
+                        alert_data['resolved_at'] = datetime.fromisoformat(alert_data['resolved_at'].replace('Z', '+00:00'))
+                    
+                    alert = Alert(**alert_data)
+                    alerts.append(alert)
+                except Exception as alert_error:
+                    logger.warning(f"알림 데이터 파싱 실패: {alert_error}")
+                    continue
             
-            alerts_data = self.db.query(
-                'alerts',
-                '#robot_id = :robot_id',
-                filter_expression=filter_expression if resolved is not None else None,
-                expression_attribute_names=expression_attribute_names,
-                expression_attribute_values=expression_attribute_values
-            )
-            
-            return [Alert(**alert_data) for alert_data in alerts_data]
+            return alerts
         except Exception as e:
             logger.error(f"로봇 알림 조회 실패: {e}")
             raise
