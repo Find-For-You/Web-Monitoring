@@ -64,8 +64,8 @@ def login_user(username, password):
     hashed_password = hash_password(password)
     
     cursor.execute('''
-        SELECT id, username, role FROM users 
-        WHERE username = ? AND password = ?
+        SELECT user_id, user_email, user_role FROM users 
+        WHERE user_email = ? AND user_password = ?
     ''', (username, hashed_password))
     
     user = cursor.fetchone()
@@ -81,9 +81,9 @@ def register_user(username, password, email):
     
     try:
         cursor.execute('''
-            INSERT INTO users (username, password, email)
-            VALUES (?, ?, ?)
-        ''', (username, hashed_password, email))
+            INSERT INTO users (user_email, user_password, first_name, last_name)
+            VALUES (?, ?, ?, ?)
+        ''', (email, hashed_password, username, ''))
         conn.commit()
         conn.close()
         return True

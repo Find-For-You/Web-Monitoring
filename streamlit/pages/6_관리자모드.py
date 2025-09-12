@@ -29,7 +29,7 @@ def get_all_users():
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT id, username, email, role, created_at, last_login_date
+        SELECT user_id, user_email, user_email, user_role, created_at, last_login_date
         FROM users
         ORDER BY created_at DESC
     """)
@@ -47,8 +47,8 @@ def update_user_role(user_id, new_role):
     try:
         cursor.execute("""
             UPDATE users 
-            SET role = ?, updated_at = ?
-            WHERE id = ?
+            SET user_role = ?, updated_at = ?
+            WHERE user_id = ?
         """, (new_role, datetime.now(), user_id))
         
         conn.commit()
@@ -67,7 +67,7 @@ def block_user(user_id):
         cursor.execute("""
             UPDATE users 
             SET isdeleted = 1, updated_at = ?
-            WHERE id = ?
+            WHERE user_id = ?
         """, (datetime.now(), user_id))
         
         conn.commit()

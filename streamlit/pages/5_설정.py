@@ -17,9 +17,9 @@ def get_user_info(user_id):
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT username, email, role, created_at
+        SELECT first_name, user_email, user_role, created_at
         FROM users 
-        WHERE id = ?
+        WHERE user_id = ?
     """, (user_id,))
     
     user = cursor.fetchone()
@@ -35,8 +35,8 @@ def update_user_info(user_id, email):
     try:
         cursor.execute("""
             UPDATE users 
-            SET email = ?, updated_at = ?
-            WHERE id = ?
+            SET user_email = ?, updated_at = ?
+            WHERE user_id = ?
         """, (email, datetime.now(), user_id))
         
         conn.commit()

@@ -59,9 +59,9 @@ def get_detection_results(robot_id):
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT d.detection_class, d.detection_conf, d.detection_bbox,
-               c.camera_name, d.detection_created_at
-        FROM detection_result d
+            SELECT d.detection_class, d.detection_conf, d.detection_bbox,
+                   c.camera_name, d.detection_created_at
+            FROM detection_results d
         JOIN camera c ON d.camera_id = c.camera_id
         JOIN robots r ON c.robot_id = r.robot_id
         WHERE r.robot_id = ?

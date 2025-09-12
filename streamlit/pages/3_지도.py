@@ -42,7 +42,7 @@ def get_detected_objects():
         SELECT d.detection_class, d.detection_conf, d.detection_bbox,
                r.robot_location_x, r.robot_location_y, r.robot_name,
                d.detection_created_at
-        FROM detection_result d
+        FROM detection_results d
         JOIN camera c ON d.camera_id = c.camera_id
         JOIN robots r ON c.robot_id = r.robot_id
         WHERE r.robot_location_x IS NOT NULL AND r.robot_location_y IS NOT NULL
